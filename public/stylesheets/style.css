@@ -1,0 +1,34 @@
+body {
+	padding: 50px;
+	font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+	color: #00B7FF;
+}
+
+#left {
+	float:left;
+	margin-left:0px;
+}
+
+#right {
+	float:left;
+	margin-left:100px;
+}
+
+#frames {list-style: none;}
+#frames li { padding:3px; }
+
+#harissa {
+	width:1600px;
+	height:1000px;
+}
+
+.current {
+	border:1px solid #daeae7;
+	background-color:#333;
+	border-radius:3px;
+	font-weight: bold;
+	color:#daeae7; 
+}
