@@ -241,7 +241,7 @@
 	        var reduced = [];
 	        for(var i=0,l=copies.length;i<l;i++) {
 	        	var color = copies[i].color;
-	        	copies[i].color = "rgba(5,0,5,1.0)";
+	        	copies[i].color = "rgba(5,0,5,1.0)"; //<---This is a hardcoded 505 keycolor test to test visibility.  This is compensated for in palette extraction. 
 				context.fillStyle="rgba(255,255,255,255)";
 				context.fillRect(0, 0, _width*_scale, _width*_scale);
 	        	if(testvisible(context,copies,i)) {
@@ -302,7 +302,7 @@
 						console.log('Image is done:',src);
 						makebest(bestshapes);
 						save(querystring("image"),querystring("folder"),bestshapes,function(){
-							//parent.nextFrame.call({width:parseInt(_width*_scale),height:parseInt(_height*_scale),milliseconds:milliseconds});
+							parent.nextFrame.call({width:parseInt(_width*_scale),height:parseInt(_height*_scale),milliseconds:milliseconds});
 						});
 					});
 				};

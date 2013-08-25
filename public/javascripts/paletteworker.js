@@ -21,14 +21,15 @@
 		
 		send("message","Starting calculation for " +size/4+ " pixels");		
 		for (var i=0, l=size; i<l; i+=4) {
-			var h = img[i].toHex() + img[i+1].toHex() + img[i+2].toHex();
+			var r = img[i], g = img[i+1], b = img[i+2];
+			if (r===5 && g===0 && b===5)  g = 1; //<---This adjustment is necessary for the reduceshapes algorithm that uses a hardcoded "505" for the visibility test
+			var h = r.toHex() + g.toHex() + b.toHex();
 			if (h) {
 				if (hashpal[h]) {
 					hashpal[h].percent=(++hashpal[h].count)/(size/4);
-					//if (palette[0].count<hashpal[h].count) palette[0] = hashpal[h];
 				} else { 
 					pal.push(h);
-					hashpal[h] = {color:h, count:1, percent:1/(size/4), r:img[i], g:img[i+1], b:img[i+2] };
+					hashpal[h] = {color:h, count:1, percent:1/(size/4), r:r, g:g, b:b };
 					if (!palette.length) palette.push(hashpal[h]);
 				}
 			}
