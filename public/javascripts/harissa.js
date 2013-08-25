@@ -116,23 +116,35 @@
 			var o = {x:x,y:y};
 			return o;		
 		}
+
+		//------------------------------------------------------------------
+		//Saves the svg images
+		var drawshapes = function(context,shapes,left,top,right,bottom){
+			left=left||0; top=top||0; right=right||(_width*_scale);bottom=bottom||(_height*_scale);
+	        for(var i=0,l=shapes.length;i<l;i++) {
+	        	var shape = shapes[i];
+	        	if(!shape.hidden) {
+		        	var x = shape.x*_scale;
+		        	var y = shape.y*_scale;
+		        	if (x>=left && y>=top && x<=right && y<=bottom) {
+			        	var r = shape.radius*_scale;
+						context.beginPath();
+						context.fillStyle = shape.color;
+						context.arc(x, y, r, 0, _360, false);
+						context.closePath();
+						context.fill();
+					}
+				}     	
+	       	};
+		};
+
 		
 		//------------------------------------------------------------------
 		//Saves the svg images
 		var makebest = function(shapes){
 	        var canvas = initCanvas("copy",_width*_scale,_height*_scale);
 	        var context = initContext(canvas);
-	        for(var i=0,l=shapes.length;i<l;i++) {
-	        	var shape = shapes[i];
-	        	var x = shape.x*_scale;
-	        	var y = shape.y*_scale;
-	        	var r = shape.radius*_scale;
-				context.beginPath();
-				context.fillStyle = shape.color;
-				context.arc(x, y, r, 0, _360, false);
-				context.closePath();
-				context.fill();	        	
-	       	};
+	        drawshapes(context,shapes);
 		};
 		
 		//------------------------------------------------------------------
@@ -192,10 +204,63 @@
 	
 		}
 		
+
+		//------------------------------------------------------------------
+		//Tests if shape has 
+		var testvisible = function(context,shapes,index){
+			var shape = shapes[index];
+        	var x = shape.x*_scale;
+        	var y = shape.y*_scale;
+        	var r = shape.radius*_scale;
+        	var l1 = Math.floor(x-r-1); l1=l1<0?0:l1;
+        	var t1 = Math.floor(y-r-1); t1=t1<0?0:t1;
+        	var d1 = Math.ceil (r*2+2);
+
+        	var l2 = Math.floor(x-_guessradius-1);
+        	var t2 = Math.floor(y-_guessradius-1);
+        	var d2 = Math.ceil (_guessradius*2+2);
+
+        	drawshapes(context,shapes,l2,t2,l2+d2,t2+d2);
+			var data = context.getImageData(l1, t1, d1, d1).data;
+			//console.log(index,'------>',l1,t1,d1,data[0],data[1],data[2],data[3]);
+			//console.log(index,'       ',l2,t2,d2,data[0],data[1],data[2],data[3]);
+			for(var i=0,l=data.length;i<l;i+=4) {
+				if(data[i]===5 && data[i+1]===0 && data[i+2]===5 && data[i+3]===255) {
+					return true;
+				}
+			}
+			return false;
+		};		
+		
+		//------------------------------------------------------------------
+		//Removes hidden shapes
+		var reduceShapes = function(shapes) {
+			var copies = shapes.slice();
+ 	        var canvas = initCanvas("test",_width*_scale,_height*_scale);
+	        var context = initContext(canvas);
+	        var reduced = [];
+	        for(var i=0,l=copies.length;i<l;i++) {
+	        	var color = copies[i].color;
+	        	copies[i].color = "rgba(5,0,5,1.0)";
+				context.fillStyle="rgba(255,255,255,255)";
+				context.fillRect(0, 0, _width*_scale, _width*_scale);
+	        	if(testvisible(context,copies,i)) {
+	        		copies[i].color = color;
+	        		reduced.push(copies[i]);
+	        	} else {
+	        		copies[i].hidden = true;
+	        	}
+	        }
+			drawshapes(context,reduced);
+			console.log('Shape count optimized from',shapes.length,'to',reduced.length);
+	        return reduced;
+		};
+		
 		//------------------------------------------------------------------
 		//Saves the image to the server
-		var save = function(imgname,folder,callback) {
-			var imgdata = document.getElementById("copy").toDataURL(); 
+		var save = function(imgname,folder,shapes,callback) {
+			var imgdata = document.getElementById("copy").toDataURL();
+			var reduced = reduceShapes(shapes);
 			$.ajax({
 				type:'post',
 				data:{'name':imgname,'folder':folder,'imgdata':imgdata},
@@ -231,17 +296,24 @@
 				c = initContext(initCanvas("c"));
 				c.drawImage(image, 0, 0);
 				var data = c.getImageData(0, 0, _width,_height);
-				getColors(data,function(colors) {
+				var start = function(colors) {
 					mapPalette(colors);
 					generate(data, function(bestshapes,milliseconds){
 						console.log('Image is done:',src);
 						makebest(bestshapes);
-						save(querystring("image"),querystring("folder"),function(){
-							parent.nextFrame.call({width:parseInt(_width*_scale),height:parseInt(_height*_scale),milliseconds:milliseconds});
+						save(querystring("image"),querystring("folder"),bestshapes,function(){
+							//parent.nextFrame.call({width:parseInt(_width*_scale),height:parseInt(_height*_scale),milliseconds:milliseconds});
 						});
 					});
-				});
-
+				};
+				if(querystring("palette")) {
+					getColors(data,function(colors){
+						parent.setColors(colors);
+						start(colors);
+					});
+				} else {
+					start(parent.getColors());
+				}
 			}
 			image.src = src;
 		}		

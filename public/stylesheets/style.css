@@ -10,6 +10,7 @@ a {
 #left {
 	float:left;
 	margin-left:0px;
+	margin-bottom:300px;
 }
 
 #right {
@@ -17,8 +18,8 @@ a {
 	margin-left:100px;
 }
 
-#frames {list-style: none;}
-#frames li { padding:3px; }
+#frames { list-style: none;}
+.frame  { padding:3px; }
 
 #harissa {
 	width:1600px;
@@ -31,4 +32,14 @@ a {
 	border-radius:3px;
 	font-weight: bold;
 	color:#daeae7; 
+}
+
+#preview {
+	display:none;
+	position:absolute;
+	z-index:999;
+}
+
+#controls {
+	width:300px;
 }

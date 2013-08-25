@@ -3,19 +3,25 @@
 <head>
 	<title>harissa</title>
 	<link rel="stylesheet" type="text/css" href="stylesheets/style.css" />
-	<script type="text/javascript" src="/javascripts/jquery-1.7.2.min.js"></script>
-	<script type="text/javascript" src="/javascripts/sequencer.js"></script>
-
 </head>
-<body>
+<body>	
 	<div id="left">
+	<h1>Harissa</h1>
 		<div id="estimate"></div>
 		<div id="elapsed"></div>
+		<div id="controls">
+			<p>First choose the palette keyframes, by checking the frames where a new palette should be generated.</p>
+			<button id="start">Start</button>
+		</div>
+		<div id="preview"><img alt="preview" id="previewimage"></div>		
 		<ul id="frames"></ul>
 		<input type="hidden" value="" name="current" id="current">
+		<input type="hidden" value="" name="colors" id="colors">
 	</div>
 	<div id="right">
 		<iframe id="harissa"></iframe>
 	</div>
+	<script type="text/javascript" src="/javascripts/jquery-1.7.2.min.js"></script>
+	<script type="text/javascript" src="/javascripts/sequencer.js"></script>	
 </body>
 </html>
