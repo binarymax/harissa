@@ -222,8 +222,6 @@
 
         	drawshapes(context,shapes,l2,t2,l2+d2,t2+d2);
 			var data = context.getImageData(l1, t1, d1, d1).data;
-			//console.log(index,'------>',l1,t1,d1,data[0],data[1],data[2],data[3]);
-			//console.log(index,'       ',l2,t2,d2,data[0],data[1],data[2],data[3]);
 			for(var i=0,l=data.length;i<l;i+=4) {
 				if(data[i]===5 && data[i+1]===0 && data[i+2]===5 && data[i+3]===255) {
 					return true;
@@ -243,7 +241,7 @@
 	        	var color = copies[i].color;
 	        	copies[i].color = "rgba(5,0,5,1.0)"; //<---This is a hardcoded 505 keycolor test to test visibility.  This is compensated for in palette extraction. 
 				context.fillStyle="rgba(255,255,255,255)";
-				context.fillRect(0, 0, _width*_scale, _width*_scale);
+				context.fillRect(0, 0, _width*_scale, _height*_scale);
 	        	if(testvisible(context,copies,i)) {
 	        		copies[i].color = color;
 	        		reduced.push(copies[i]);
