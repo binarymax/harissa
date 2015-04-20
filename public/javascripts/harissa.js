@@ -1,38 +1,37 @@
 (function(){
 			
 		//Generations (number of shapes)
-		const _generations = 32000;
-			
-		//Full Arc in radians
-		const _360 = 2 * Math.PI;
-	
+		var _generations = 5000;
+				
 		//Maximum dimensions for random shapes
-		const _guessradius = 10;
-	
-		//Image sizes variables
-		var _width;
-		var _height;
-		var _size;
-
-		var _scale = 2.5;
-		
+		var _guessradius = 10;
+			
 		//The palette of the image
 		var _colors = [];
 		var _colorshex = [];
 		var _colornum = 0;
 		
 		var _estimated = false;
+
+		//------------------------------------------------------------------	
+		//Puts a random circle on the image
+		var putArc = function(context) {
+
+			//var o = cartesian(rand1(360),rand1(_height/2),_width/2,_height/2);
+			var o = getGridCoords();
+			var r = rand2(1,_guessradius);
+			var c = _colorshex[rand1(_colornum)];
+
+			context.beginPath();
+			context.fillStyle = c;
+			context.arc(o.x, o.y, r, 0, _360, false);
+			context.closePath();
+			context.fill();
+			var shape = {x:o.x,y:o.y,radius:r,color:c};
+			return shape;
 			
-		//------------------------------------------------------------------
-		//Gets a querystring value:
-		var querystring = function(key,url){
-		  url = url || window.location.search;
-		  key = key.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]"); 
-		  var regex = new RegExp("[\\?&]"+key+"=([^&#]*)"); 
-		  var results = regex.exec( url );
-		  return (!results)?"":decodeURIComponent(results[1].replace(/\+/g, " "));
 		};
-		
+				
 		//------------------------------------------------------------------
 		//Event builder:
 		var workerEvent = function(source,result,ready) {
@@ -49,95 +48,6 @@
 			paletteworker.onmessage = workerEvent("palette",callback);
 			paletteworker.postMessage({'imagedata':data});
 		};	
-		
-		//------------------------------------------------------------------
-		//Initializes a canvas width and height
-		var initCanvas = function(canvas,width,height) {
-			if (typeof canvas === "string") canvas = document.getElementById(canvas);
-			canvas.width  = parseInt(width||_width);
-			canvas.height = parseInt(height||_height);
-			canvas.style.width  = canvas.width + 'px';
-			canvas.style.height = canvas.height + 'px';
-			return canvas;
-		};
-		
-		//------------------------------------------------------------------
-		//Initializes the context of a canvas
-		var initContext = function(canvas) {
-			var context = canvas.getContext("2d");
-			context.fillStyle="#ffffff";
-			context.fillRect(0, 0, canvas.width, canvas.height);
-			return context;
-		};
-			
-		//------------------------------------------------------------------	
-		//Random number helpers
-		var rand1 = function(max){ return Math.floor(Math.random()*max); }
-		var rand2 = function(min,max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
-	
-		//------------------------------------------------------------------	
-		//Puts a random circle on the image
-		var putArc = function(context) {
-	
-			//var o = cartesian(rand1(360),rand1(_height/2),_width/2,_height/2);
-			var o = getGridCoords();
-			var r = rand2(1,_guessradius);
-			var c = _colorshex[rand1(_colornum)];
-	
-			context.beginPath();
-			context.fillStyle = c;
-			context.arc(o.x, o.y, r, 0, _360, false);
-			context.closePath();
-			context.fill();
-			var shape = {x:o.x,y:o.y,radius:r,color:c};
-			return shape;
-			
-		};
-	
-		//------------------------------------------------------------------
-		//Converts polar coordinates to cartesian
-		var cartesian = function(d,l,x,y){
-			//Get base cartesian around 0,0 axis
-		 	var x1 = Math.floor(l * Math.cos(d * 2 * Math.PI / 360)) + (x||0);
-		 	var y1 = Math.floor(l * Math.sin(d * 2 * Math.PI / 360)) + (y||0);
-			return {x:x1,y:y1};
-		};
-	
-		var getPolarCoords = function() {
-			var l = rand1(_height/2); //length of vector
-			var d = rand1(360);		  //angle of vector
-			var o = cartesian(d,l,_width/2,_height/2);
-			return o;
-		}
-	
-		var getGridCoords = function() {
-			var x = rand1(_width); 
-			var y = rand1(_height);
-			var o = {x:x,y:y};
-			return o;		
-		}
-
-		//------------------------------------------------------------------
-		//Saves the svg images
-		var drawshapes = function(context,shapes,left,top,right,bottom){
-			left=left||0; top=top||0; right=right||(_width*_scale);bottom=bottom||(_height*_scale);
-	        for(var i=0,l=shapes.length;i<l;i++) {
-	        	var shape = shapes[i];
-	        	if(!shape.hidden) {
-		        	var x = shape.x*_scale;
-		        	var y = shape.y*_scale;
-		        	if (x>=left && y>=top && x<=right && y<=bottom) {
-			        	var r = shape.radius*_scale;
-						context.beginPath();
-						context.fillStyle = shape.color;
-						context.arc(x, y, r, 0, _360, false);
-						context.closePath();
-						context.fill();
-					}
-				}     	
-	       	};
-		};
-
 		
 		//------------------------------------------------------------------
 		//Saves the svg images
@@ -164,12 +74,26 @@
 			var bestdifference = 0;
 					
 			//- - - - - - - - - - - - - - - - - - - -
+			//Logs generation information 
+			var log = function() {
+				if (generation%500===0) {
+					console.log("Generation " + generation + " of " + _generations + " complete!");
+					if(!_estimated) {
+						parent.estimate(new Date() - start, 500, _generations);
+						_estimated = true;
+					}
+				}
+			};
+
+			//- - - - - - - - - - - - - - - - - - - -
 			//Loads the difference from the thread, and checks if all threads from this generation are finished 
 			var checkDiff = function(difference) {
 				if (generation<10 || difference<bestdifference) {
 					bestdifference = difference;
 					bestcontext.drawImage(testcanvas, 0, 0, _width, _height);
 					bestshapes.push(shape);
+					generation++;
+					log();
 				}
 				testcontext.drawImage(bestcanvas, 0, 0, _width, _height);			
 				nextGen();
@@ -180,13 +104,7 @@
 			var start = (new Date()) - 0;
 			var nextGen = function() {
 				var messagedata,end;
-				if(++generation%500===0) {
-					console.log("Generation " + generation + " of " + _generations + " complete!");
-					if(!_estimated) {
-						parent.estimate(new Date() - start, 500, _generations);
-						_estimated = true;
-					}
-				}
+
 				if(generation<_generations) {
 					shape = putArc(testcontext);
 					messagedata = {'type':'diff','imagedata':testcontext.getImageData(0, 0, _width,_height)};
@@ -261,7 +179,7 @@
 			var reduced = reduceShapes(shapes);
 			$.ajax({
 				type:'post',
-				data:{'name':imgname,'folder':folder,'imgdata':imgdata},
+				data:{'name':imgname,'folder':folder,'imgdata':imgdata,'shapes':reduced},
 				url:imgname + '?folder=' + folder
 			}).done(callback);
 		}

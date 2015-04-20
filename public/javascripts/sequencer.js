@@ -13,22 +13,28 @@ $(function(){
 	};
 
 	//------------------------------------------------------------------
+	//Converts milliseconds to H:M:S
+	var time = function(millis) {
+		var s = (parseInt(millis / 1000) % 60).toString();
+		var m = (parseInt(millis / (1000 * 60)) % 60).toString();
+		var h = (parseInt(millis / (1000 * 60 * 60)) % 24).toString();
+		var ss = s.length===1?'0'+s:s;
+		var mm = m.length===1?'0'+m:m;
+		var hh = h.length===1?'0'+h:h;
+		return hh + ':' + mm + ':' + ss;
+	}
+
+	//------------------------------------------------------------------
 	//Estimates length of the calculation:
 	var estimate = function(milliseconds,slice,generations) {
 		if(!_estimated) {
 			_estimated = true;
 			var total = (generations/slice) * milliseconds * $("#frames li").length;
-			var seconds = total/1000;
-			var minutes = seconds/60;
-			var hours = minutes/60;
-			$("#estimate").text(parseInt(hours) + ':' + parseInt(minutes) + ':' + parseInt(seconds));
-			var start = new Date() - milliseconds; 
+			$("#estimate").text(time(total));
+			var start = new Date(); 
 			setInterval(function(){
-				var elapsed = new Date() - start;
-				var seconds = elapsed/1000;
-				var minutes = seconds/60;
-				var hours = minutes/60;
-				$("#elapsed").text(parseInt(hours) + ':' + parseInt(minutes) + ':' + parseInt(seconds));
+				var elapsed = (new Date()) - start;
+				$("#elapsed").text(time(elapsed));
 			},1000);
 		}
 	};
@@ -132,7 +138,7 @@ $(function(){
 		$("#start").on("click",start);
 		$frames
 			.on("mouseover",".frame",previewOver)
-			.on("mouseout",".frame",previewOut);
+			//.on("mouseout",".frame",previewOut);
 		
 	};
 	//------------------------------------------------------------------	

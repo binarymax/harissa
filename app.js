@@ -4,9 +4,10 @@
  */
 
 var express = require('express')
-  , http = require('http')
-  , path = require('path')
-  , im   = require('./lib/imagemagick');
+  , http    = require('http')
+  , path    = require('path')
+  , fs      = require('fs')
+  , im      = require('./lib/imagemagick');
 
 var app = express();
 
@@ -34,11 +35,17 @@ app.get('/harissa.html', function(req,res){
 	res.sendfile('./public/harissa.html');
 });
 
+app.get('/blend.html', function(req,res){
+	res.sendfile('./public/blend.html');
+});
 
 app.get('/frames/:name', function(req,res){
 	var folder = req.params.name;
+	var type = req.query.type||'';
+	if (type.length) type = '_' + type;
+
 	im.frames(
-		'/home/max/apps/harissa/public/video/frames/'+folder+'/',
+		process.cwd() + '/public/video/frames/'+folder+type+'/',
 		successCallback(req,res),
 		failureCallback(req,res)
 	);
@@ -55,6 +62,11 @@ app.get('/frame/:name', function(req,res){
 	);		
 });
 
+app.get('/file/:folder/:name',function(req,res){
+	var file = process.cwd() + '/public/video/frames/' + req.params.folder + '/' + req.params.name;
+	res.send(fs.readFileSync(file));
+});
+
 app.get('/extract/:name', function(req,res){
 	var video = req.params.name;
 	im.extract(
@@ -69,10 +81,16 @@ app.get('/extract/:name', function(req,res){
 app.post('/frame/:name',function(req,res){
 	var imgdata = req.body.imgdata;
 	var imgname = req.params.name;
+	var shapes  = req.body.shapes;
 	var folder  = req.query.folder;
 	
+	var json = process.cwd() + '/public/video/frames/' + folder + '_json/' + imgname.substr(0,imgname.lastIndexOf('.'));
+	var out = process.cwd() + '/public/video/frames/' + folder + '_out/' + imgname.substr(0,imgname.lastIndexOf('.'));
+
+	fs.writeFileSync(json+'.json',JSON.stringify(shapes));
+
 	im.b64ToJPG(
-		process.cwd() + '/public/video/frames/' + folder + '_out/' + imgname.substr(0,imgname.lastIndexOf('.')),
+		out,
 		imgdata,
 		successCallback(req,res),
 		failureCallback(req,res)

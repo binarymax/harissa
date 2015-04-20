@@ -4,25 +4,24 @@
 	<title>harissa</title>
 	<link rel="stylesheet" type="text/css" href="stylesheets/style.css" />
 </head>
-<body>	
+<body>
+	<div id="view"></div>
 	<div id="left">
-	<h1>Harissa</h1>
+	<h1>Harissa Blender</h1>
 		<div id="estimate"></div>
 		<div id="elapsed"></div>
 		<div id="controls">
-			<p>First choose the palette keyframes, by checking the frames where a new palette should be generated.</p>
+			<p>Press start to begin the calculation.</p>
 			<button id="start">Start</button>
 		</div>
-		<div id="preview"><img alt="preview" id="previewimage"></div>		
+		<div id="preview"></div>
 		<ul id="frames"></ul>
 		<input type="hidden" value="" name="current" id="current">
 		<input type="hidden" value="" name="colors" id="colors">
 	</div>
-	<div id="right">
-		<iframe id="harissa"></iframe>
-	</div>
 	<script type="text/javascript" src="/javascripts/jquery-1.7.2.min.js"></script>
+	<script type="text/javascript" src="/javascripts/kd-tree-javascript/kdTree.js"></script>
 	<script type="text/javascript" src="/javascripts/utils.js"></script>
-	<script type="text/javascript" src="/javascripts/sequencer.js"></script>
+	<script type="text/javascript" src="/javascripts/blender.js"></script>	
 </body>
 </html>

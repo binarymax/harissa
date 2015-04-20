@@ -17,7 +17,7 @@
 		var size = imagedata.height*imagedata.width*4;
 		var palette = [];
 		var tolerance = 0.1 * ( 255 * 255 * 2 );
-		var tolerance = 0.05 * ( 255 * 255 * 2 );
+		//var tolerance = 0.05 * ( 255 * 255 * 2 );
 		
 		send("message","Starting calculation for " +size/4+ " pixels");		
 		for (var i=0, l=size; i<l; i+=4) {
@@ -55,7 +55,7 @@
 	}
 	
 	//Gauges tolerance similarity between two colors
-	function isSimilar(p1,p2,tolerance) {
+	function isSimilar2(p1,p2,tolerance) {
 		if (hashsimilar[p1.color+p2.color]) return true;
 		var difference = (
 			Math.pow(p1.r - p2.r, 2) +
@@ -66,6 +66,19 @@
 		if (similar) hashsimilar[p1.color+p2.color] = difference;
 		return similar;
 		
+	}
+
+	// Pretty good color distance from
+	// http://www.compuphase.com/cmetric.htm
+	function isSimilar(a,b,tolerance) {
+		var dr = a.r - b.r;
+		var dg = a.g - b.g;
+		var db = a.b - b.b;
+		var redMean = (a.r + b.r)/2;
+		var difference = (2+redMean/256)*dr*dr + 4*dg*dg + (2 + (255 - redMean)/256)*db*db
+		var similar = difference<tolerance;
+		if (similar) hashsimilar[a.color+a.color] = difference;
+		return similar;
 	}
 	
 	//Converts a base10 number (0 to 255) to a 2 digit hexadecimal string
