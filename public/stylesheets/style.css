@@ -43,3 +43,9 @@ a {
 #controls {
 	width:300px;
 }
+
+.pal {
+	display:inline-block;
+	height:100px;
+	width:20px;
+}

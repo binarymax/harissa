@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<head>
+	<title>harissa</title>
+	<link rel="stylesheet" type="text/css" href="stylesheets/style.css" />
+</head>
+<body>	
+	<div id="left">
+	<h1>Harissa</h1>
+		<div id="estimate"></div>
+		<div id="elapsed"></div>
+		<div id="controls">
+			<p>Set the stuffs then start the things.</p>
+			<hr>
+			<input type="number" id="flex" value=0.2 size=5><button id="colorify">Colorify</button>
+			<input type="number" id="cont" value=0.2 size=5><button id="contrast">Contrast</button>
+			<hr>
+			<button id="start">Start</button>
+		</div>
+		<table id="frames" cellspacing=20>
+			<thead>
+				<th>render</th>
+				<th>key</th>
+				<th>name</th>
+				<th>image</th>
+				<th>thumb</th>
+				<th>colors</th>
+				<th>elapsed</th>
+			</thead>
+			<tbody>
+			</tbody>
+		</table>
+		<input type="hidden" value="" name="current" id="current">
+		<input type="hidden" value="" name="colors" id="colors">
+	</div>
+	<div id="right">
+		<iframe id="harissa"></iframe>
+	</div>
+
+	<script type="text/template" id="row">
+		<tr id="{{id}}">
+			<td class="render"><input type='checkbox' class='rendercheck' id='render{{id}}' /></td>
+			<td class="keyframe"><input type='checkbox' class='keyframecheck' id='keyframe{{id}}' /></td>
+			<td class="name">{{frame}}</td>
+			<td class="image">{{img}}</td>
+			<td class="preview"><img src="{{prev}}" id='prev{{id}}' width=100 /></td>
+			<td class="colors"></td>
+			<td class="elapsed"></td>
+		</tr>
+	</script>
+
+	<script type="text/template" id="pal">
+		<div class="pal" style="background-color:#{{color}}">&nbsp;</div>
+	</script>
+
+	<script type="text/javascript" src="/javascripts/jquery-1.7.2.min.js"></script>
+	<script type="text/javascript" src="/javascripts/lodash.min.js"></script>
+	<script type="text/javascript" src="/javascripts/utils.js"></script>
+	<script type="text/javascript" src="/javascripts/colors.js"></script>
+	<script type="text/javascript" src="/javascripts/mixer.js"></script>
+</body>
+</html>

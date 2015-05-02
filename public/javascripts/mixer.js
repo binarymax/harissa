@@ -1,19 +1,12 @@
 $(function(){
 	"use strict"
 	var _folder, _estimated, _querys=window.location.search;
+	console.log(_querys);
+
+	_.templateSettings.interpolate = /{{([\s\S]+?)}}/g;
 
 	//------------------------------------------------------------------
-	//Gets a querystring value:
-	var querystring = function(key,url){
-		url = url || window.location.search;
-		key = key.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]"); 
-		var regex = new RegExp("[\\?&]"+key+"=([^&#]*)"); 
-		var results = regex.exec( url );
-		return (!results)?"":decodeURIComponent(results[1].replace(/\+/g, " "));
-	};
-
-	//------------------------------------------------------------------
-	//Converts milliseconds to H:M:S
+	//Converts milliseconds to HH:MM:SS
 	var time = function(millis) {
 		var s = (parseInt(millis / 1000) % 60).toString();
 		var m = (parseInt(millis / (1000 * 60)) % 60).toString();
@@ -55,18 +48,21 @@ $(function(){
 		var frame = $(".current"),src,img;
 		
 		if (!frame.length) {
-			frame = $("#frames li:first");
+			frame = $("#frames > tbody tr:first");
+
 		} else {
-			frame.append('<span class="time">'+this.milliseconds+'</span>');
+			//frame.append('<span class="time">'+this.milliseconds+'</span>');
+			frame.find(".elapsed").text(time(this.milliseconds));
 			frame.removeClass("current");
 			frame = frame.next();
 		}
 
 		if (frame.length) {			
 			frame.addClass("current");
-			img = encodeURIComponent(frame.attr("data-src"));
-			src = "/harissa.html?image=" + img + '&folder=' + _folder + '&rotate=180';
-			src+= (frame.find("input[type=checkbox]:first").attr("checked")==="checked") ? '&palette=1' : ''
+			img = encodeURIComponent(frame.find(".image").text());
+			src = "/harissa.html?image=" + img + '&' + _querys.substr(1);
+			//src+= (frame.find(".keyframe > input").attr("checked")==="checked") ? '&palette=1' : ''
+			src+= !$("#colors").val().length ? '&palette=1' : ''
 			$("#harissa").attr("src",src);
 			
 		} else {
@@ -98,47 +94,54 @@ $(function(){
 		return nobubble(e);
 	};
 
-	//------------------------------------------------------------------
-	//Frame Preview Mouseover:	
-	var previewOver = function(e) {
-		var $frame = $(this);
-		var $preview = $("#preview");
-		var $image = $("#previewimage");
-		var offset = $frame.offset();
-		offset.left+=200;
-		$preview.css(offset);
-		$("#preview").show();
-		$image.attr("src",$frame.attr("data-preview"));
-		return nobubble(e);	 
-	};
 
 	//------------------------------------------------------------------
-	//Frame Preview Mouseout:
-	var previewOut = function(e) {
-		$("#preview").hide();
-		return nobubble(e);	 
+
+	var colorify = function(){
+
+		var $frames = $("#frames > tbody");
+
+		var flex = $("#flex").val();
+
+		colors.flex(parseFloat(flex));
+
+		$frames.find(".colors div").remove();
+
+		//var prev = $frames.find(".preview:first > img").attr("src");
+		var prev = $frames.find(".image:first").text()+"?folder="+_folder;
+		console.log(prev);
+		colors.getImageColors(prev,function(cdata){
+			mapPaletteTable(cdata,$frames.find(".colors"));
+		});
+
 	};
 
 	//------------------------------------------------------------------
 	//Gets the frames and shows them in the list:
 	var load = function() {
-		var $frames = $("#frames");
+		var $frames = $("#frames > tbody");
+		var row = _.template($("#row").html());
 		_folder = querystring("folder");
 		$.get("/frames/" + _folder).done(function(data){
 			if(data.isSuccess) {
 				
 				data.result.map(function(frame){
 					var id = frame.substr(0,frame.indexOf('.'));
-					$frames.append("<li id='"+id+"' data-src='/frame/"+frame+"' data-preview='/frame/"+frame+_querys+"' class='frame'><label><input type='checkbox' id='chk"+id+"' />"+frame+"</label></li>");
+					var img = "/frame/"+frame;
+					var prev = img+_querys;
+					var data = {id:id,frame:frame,img:img,prev:prev};
+					var line = $(row(data));
+					$frames.append(line);
 				});
-				$frames.find("input[type=checkbox]:first").attr("checked","checked").attr("disabled","disabled");
+
+				$frames.find(".keyframecheck:first").attr("checked","checked").attr("disabled","disabled");
+
 			}
 		});
 		
 		$("#start").on("click",start);
-		$frames
-			.on("mouseover",".frame",previewOver)
-			//.on("mouseout",".frame",previewOut);
+
+		$("#colorify").on("click",colorify);
 		
 	};
 	//------------------------------------------------------------------	

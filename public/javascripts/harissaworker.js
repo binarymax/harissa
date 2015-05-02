@@ -32,16 +32,41 @@
 	//Gets the difference between two images
 	var getImageDifference3d = function(left,right) {
 		var difference = 0;
-		for(var r=0,g=1,b=2;r<_size;r+=4,g+=4,b+=4) difference += getPixelDifference3d(left[r],left[g],left[b],right[r],right[g],right[b]);
+		//for(var r=0,g=1,b=2;r<_size;r+=4,g+=4,b+=4) difference += getPixelDifference3d(left[r],left[g],left[b],right[r],right[g],right[b]);
+		for(var r=0,g=1,b=2;r<_size;r+=4,g+=4,b+=4) difference += getColorDistance(left[r],left[g],left[b],right[r],right[g],right[b]);
 		return difference;	
 	};
 
 	//Gets the difference between two images
 	var getImageDifference4d = function(left,right) {
 		var difference = 0;
-		for(var r=0,g=1,b=2,a=3;r<_size;r+=4,g+=4,b+=4,a+=4) difference += getPixelDifference4d(left[r],left[g],left[b],left[a],right[r],right[g],right[b],right[a]);
+		//for(var r=0,g=1,b=2,a=3;r<_size;r+=4,g+=4,b+=4,a+=4) difference += getPixelDifference4d(left[r],left[g],left[b],left[a],right[r],right[g],right[b],right[a]);
+		for(var r=0,g=1,b=2,a=3;r<_size;r+=4,g+=4,b+=4,a+=4) difference += getColorDistanceA(left[r],left[g],left[b],left[a],right[r],right[g],right[b],right[a]);
 		return difference/_pixels;	
 	};
+
+	// Pretty good color distance from
+	// http://www.compuphase.com/cmetric.htm
+	function getColorDistance(r1,g1,b1,r2,g2,b2) {
+		var dr = r1 - r2;
+		var dg = g1 - g2;
+		var db = b1 - b2;
+		var redMean = (r1 + r2)/2;
+		var difference = (2+redMean/256)*dr*dr + 4*dg*dg + (2 + (255 - redMean)/256)*db*db
+		return difference;
+	}	
+
+	// Pretty good color distance from
+	// http://www.compuphase.com/cmetric.htm
+	function getColorDistanceA(r1,g1,b1,a1,r2,g2,b2,a2) {
+		var dr = r1 - r2;
+		var dg = g1 - g2;
+		var db = b1 - b2;
+		var redMean = (r1 + r2)/2;
+		var difference = (2+redMean/256)*dr*dr + 4*dg*dg + (2 + (255 - redMean)/256)*db*db
+		return difference;
+	}	
+
 
 	//Gets the difference between two colors
 	var sq = function(x){return x*x;};

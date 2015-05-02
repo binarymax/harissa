@@ -18,8 +18,33 @@ $(function(){
 	};
 
 	//------------------------------------------------------------------
+	//Saves the image to the server
+	var save = function(imgname,folder,imgdata,callback) {
+		$.ajax({
+			type:'post',
+			data:{'name':imgname,'folder':folder,'imgdata':imgdata},
+			url:'/blend/'+imgname + '?folder=' + folder
+		}).done(callback);
+	}
+
+	//------------------------------------------------------------------
+	//Pads a number with zeros
+	var pad = function(i,l) {
+		var str = i.toString();
+		var len = l.toString().length;
+		while (str.length<=len) {str = '0' + str};
+		return str;
+	};
+
+
+	//------------------------------------------------------------------
 	//Finishes the calculation:	
-	var finish = function(folder,params,callback) {
+	var finish = function(views,folder,callback) {
+		for(var i=0,l=views.length;i<l;i++) {
+			var name = pad(i,l);
+			var b64 = views[i].canvas[0].toDataURL();
+			save(name,folder,b64);
+		}
 		/*
 		$.ajax({
 			type:'post',
@@ -27,6 +52,15 @@ $(function(){
 			url:'/merge/' + folder
 		}).done(callback);
 		*/
+	};
+
+	//------------------------------------------------------------------
+	//Check/Uncheck boxes:
+	var checkall = function(on) {
+		return function(e) {
+			$("#frames > li input").attr("checked",on);
+			return nobubble(e);
+		}
 	};
 
 	//------------------------------------------------------------------
@@ -66,7 +100,8 @@ $(function(){
 			var d=data[i];
 			var c=colors[d.color];
 			if (c && c.tree) {
-				var p = c.tree.nearest(d,1);
+				var p = null;
+				try{p = c.tree.nearest(d,1);}catch(ex){console.log(d);}
 				if (p && p.length && p[0] && p[0][0]) {
 					d.next = p[0][0];
 					d.inter = interpolate(d,d.next,dims,_inters);
@@ -77,17 +112,19 @@ $(function(){
 		return data;
 	};
 
-	var blender = function(frames) {
+	var blender = function(source,frames) {
 		var blends = [];
-		for(var s=0;s<_set.length-1;s++) {
-			var set = _set[s];
+		for(var s=0;s<source.length-1;s++) {
+			var set = source[s];
 			var blend = blends[s*_inters] = frame(set.data,frames[s+1].colors);
+			//console.log('------',s*_inters);
 			    var l = blend.length;
 			for(var i = 0; i<l; i++) {
 				var d = blend[i];
 				//console.log(JSON.stringify(d));
-				for(var j=0;j<d.inter.length;j++) {
+				for(var j=0;d&&d.inter&&j<d.inter.length;j++) {
 					var bl = s*_inters+j;
+					//console.log('---------',bl);
 					blends[bl] = blends[bl] || {name:bl,data:[]};
 					blends[bl].data = blends[bl].data || [];
 					blends[bl].data.push(d.inter[j]);
@@ -124,11 +161,28 @@ $(function(){
 	//Starts the process:
 	var start = function(e) {
 		$("#controls").hide();
+		var resize = querystring("resize");
 		_width=800;
 		_height=600;
-		var frames = insert(_set);
-		var blends = blender(frames);
+		if (resize && resize.length) {
+			var wh = resize.split('x');
+			_width = parseInt(wh[0]);
+			_height = parseInt(wh[1]);
+		}
+		var source = [];
+		$("#frames > li").each(function(li){
+			var id = $(this).attr("id");
+			var ch = $(this).find("input").attr("checked") ? true : false;
+			if (ch) {
+				for (var i=0;i<_set.length;i++) {
+					if(_set[i].id===id) source.push(_set[i]);
+				}
+			}
+		});
+		var frames = insert(source);
+		var blends = blender(source,frames);
 		var views  = viewer(blends);
+		finish(views,querystring('folder'),function(){});
 		animate(views);
 		return nobubble(e);
 	};
@@ -164,7 +218,7 @@ $(function(){
 	var async = function(length,finish) {
 		var done = 0;
 		var set = [];
-		return function(name){
+		return function(id,name){
 			return function(data) {
 				data = JSON.parse(data).map(function(p){
 					return {
@@ -174,7 +228,7 @@ $(function(){
 						color:p.color
 					}
 				});
-				set.push({name:name,data:data});
+				set.push({id:id,name:name,data:data});
 				if(++done===length) finish(set.sort(function(a,b){return a<b?-1:1}));
 			}
 		}
@@ -184,6 +238,8 @@ $(function(){
 
 	var enable = function(set){
 		_set = set;
+		$("#uncheck").on("click",checkall(false));
+		$("#recheck").on("click",checkall(true));
 		$("#start").on("click",start);
 		$("#frames").show();//.on("mouseover",".frame",previewOver);
 	}
@@ -197,13 +253,13 @@ $(function(){
 			if(data.isSuccess) {
 				var length = data.result.length;
 				var queue = async(length,enable);
+				console.log(data.result);
 				data.result.map(function(frame){
 					var id = frame.substr(0,frame.indexOf('.'));
-					var file = "/file/"+_folder+"_json/"+frame;
-					$.get(file).done(queue(file));
-					$frames.append("<li id='"+id+"' data-src='"+file+"' data-preview='"+file+"' class='frame'><label><input type='checkbox' id='chk"+id+"' />"+frame+"</label></li>");
+					var file = "/file/"+_folder+"/json/"+frame;
+					$.get(file).done(queue(id,file));
+					$frames.append("<li id='"+id+"' data-src='"+file+"' data-preview='"+file+"' class='frame'><label><input type='checkbox' id='chk"+id+"' checked='checked' />"+frame+"</label></li>");
 				});
-				$frames.find("input[type=checkbox]:first").attr("checked","checked").attr("disabled","disabled");
 			}
 		});
 		

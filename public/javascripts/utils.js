@@ -20,6 +20,20 @@ var _scale = 2.5;
 
 var _inters = 15;
 
+//The palette of the image
+var _colors = [];
+var _colorshex = [];
+var _colornum = 0;
+
+
+//------------------------------------------------------------------
+//Event builder:
+utils.workerEvent = function(source,result,ready) {
+	return function(event) {
+		var data = event.data;
+		switch (data.type) {case "result":result(data.data);break;case "ready":ready(data.data);break;}
+	};	
+};
 
 //------------------------------------------------------------------
 //Gets a querystring value:
@@ -29,6 +43,16 @@ utils.querystring = function(key,url){
 	var regex = new RegExp("[\\?&]"+key+"=([^&#]*)"); 
 	var results = regex.exec( url );
 	return (!results)?"":decodeURIComponent(results[1].replace(/\+/g, " "));
+};
+
+//------------------------------------------------------------------
+//Gets a querystring object:
+utils.querys = function(url){
+	var obj  = {};
+	url = url || window.location.search;
+	if(url.indexOf('?')===0) url = url.substr(1);
+	url.split("&").map(function(itm){var o=itm.split('=');obj[o[0]]=o[1];});
+	return obj;
 };
 
 //------------------------------------------------------------------
@@ -58,48 +82,6 @@ utils.interpolate1d = function(a,b,f) {
 }
 
 //------------------------------------------------------------------
-//Interpolate two points into f steps
-utils.interpolate2d = function(a,b,f) {	
-	f = f|| _inters;
-	var dx = (a.x-b.x);
-	var dy = (a.y-b.y);
-	var m = dy/dx;
-	var B = a.y - (a.x * m);
-	var k = dx/f;
-	var n = [];
-	for(var i = 0; i<=f; i++) {
-		var x = a.x-(k*i);
-		var y = m*x+B;
-		n.push({x:Math.round(x),y:Math.round(y)});
-	}
-	return n;
-}
-
-//------------------------------------------------------------------
-//Interpolate two points with radius change into f steps
-utils.interpolate2dR = function(a,b,f) {
-	f = f|| _inters;
-	var dx = (a.x-b.x);
-	var dy = (a.y-b.y);
-	var m = dy/dx;
-	var B = a.y - (a.x * m);
-	var k = dx/f;
-
-	var d = (b.radius-a.radius);
-	var l = d/f;
-
-	var n = [];
-
-	for(var i = 0; i<=f; i++) {
-		var x = a.x-(k*i);
-		var y = m*x+B;
-		var r = a.radius+(l*i);
-		n.push({x:Math.round(x),y:Math.round(y),radius:r,color:b.color,z:b.z});
-	}
-	return n;
-};
-
-//------------------------------------------------------------------
 //Interpolate n dimensions into f steps
 utils.interpolate = function(a,b,d,e) {
 
@@ -113,11 +95,11 @@ utils.interpolate = function(a,b,d,e) {
 	for(var s = 0; s<=e; s++) {
 
 		//Each dimension property
-			var o  = JSON.parse(JSON.stringify(a));
-		for(var i  =  0; i<d.length; i++) {
+			var o  = JSON.parse(JSON.stringify(a));      //Poor man's clone
+		for(var i  =  0; i<d.length; i++) {              //'x' , 'y' => a.x , a.y
 			var n  =  d[i];
-			var k  = (b[n]-a[n])/e;
-			  o[n] =  Math.round((a[n]+k*s)*100)/100;
+			var k  = (b[n]-a[n])/e;                      //interpolation step
+			  o[n] =  Math.round((a[n]+k*s)*1000)/1000;  //rounded to thousandths
 		}
 
 		r.push(o);
@@ -209,6 +191,36 @@ utils.getGridCoords = function() {
 	var o = {x:x,y:y};
 	return o;		
 }
+
+//------------------------------------------------------------------
+utils.mapPalette = function(colors,canvas) {
+	var p = utils.initContext(canvas);
+	_colors   = colors;
+	_colornum = colors.length;
+	for(var i=0,n=_width/_colornum;i<_colornum;i++) {
+		_colorshex.push('#' + _colors[i].color);
+		p.fillStyle=_colorshex[i];
+		p.fillRect(i*n,0,i*n+n,i*n+_height);
+	};
+	console.log(_colorshex.join(','));
+}
+
+//------------------------------------------------------------------
+utils.mapPaletteTable = function(colors,div) {
+	var pal = _.template($("#pal").html());
+
+	colors.map(function(color){
+		div.append($(pal(color)));
+	});
+}
+
+//------------------------------------------------------------------
+utils.initDimensions = function(width,height) {
+	_width = _width||width;
+	_height = _height||height;
+	_size = _size||_width*_height*4;
+}
+
 
 //------------------------------------------------------------------
 //Saves the svg images

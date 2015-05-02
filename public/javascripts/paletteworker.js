@@ -3,23 +3,24 @@
 	//Worker Messaging System
 	var send = function(type,data) {self.postMessage({type:type,data:data});}
 	self.onmessage = function(event) {
-		send("result",getPalette(event.data.imagedata));
+		send("result",getPalette(event.data.imagedata,event.data.flexibility));
 	};
 
 	//The hash array for colors
 	var hashsimilar = [];
 	
 	//Gets a representative palette from imagedata
-	function getPalette(imagedata) {
+	function getPalette(imagedata,flexibility) {
 		var hashpal = new Array();
 		var pal = new Array();
 		var img = imagedata.data;
 		var size = imagedata.height*imagedata.width*4;
 		var palette = [];
-		var tolerance = 0.1 * ( 255 * 255 * 2 );
+		var flexibility = flexibility || 0.1;
+		var tolerance = flexibility * ( 255 * 255 * 2 );
 		//var tolerance = 0.05 * ( 255 * 255 * 2 );
 		
-		send("message","Starting calculation for " +size/4+ " pixels");		
+		send("message","Starting calculation for " +size/4+ " pixels");
 		for (var i=0, l=size; i<l; i+=4) {
 			var r = img[i], g = img[i+1], b = img[i+2];
 			if (r===5 && g===0 && b===5)  g = 1; //<---This adjustment is necessary for the reduceshapes algorithm that uses a hardcoded "505" for the visibility test

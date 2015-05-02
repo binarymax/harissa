@@ -5,12 +5,7 @@
 				
 		//Maximum dimensions for random shapes
 		var _guessradius = 10;
-			
-		//The palette of the image
-		var _colors = [];
-		var _colorshex = [];
-		var _colornum = 0;
-		
+					
 		var _estimated = false;
 
 		//------------------------------------------------------------------	
@@ -31,24 +26,7 @@
 			return shape;
 			
 		};
-				
-		//------------------------------------------------------------------
-		//Event builder:
-		var workerEvent = function(source,result,ready) {
-			return function(event) {
-				var data = event.data;
-				switch (data.type) {case "result":result(data.data);break;case "ready":ready(data.data);break;}
-			};	
-		};
-	
-		//------------------------------------------------------------------
-		//Palette Extractor Worker
-		var getColors = function(data,callback){
-			var paletteworker = new Worker('/javascripts/paletteworker.js?random='+parseInt(Math.random()*100000).toString());
-			paletteworker.onmessage = workerEvent("palette",callback);
-			paletteworker.postMessage({'imagedata':data});
-		};	
-		
+			
 		//------------------------------------------------------------------
 		//Saves the svg images
 		var makebest = function(shapes){
@@ -124,7 +102,7 @@
 		
 
 		//------------------------------------------------------------------
-		//Tests if shape has 
+		//Tests if shape is visible after other shapes cover it
 		var testvisible = function(context,shapes,index){
 			var shape = shapes[index];
         	var x = shape.x*_scale;
@@ -183,27 +161,7 @@
 				url:imgname + '?folder=' + folder
 			}).done(callback);
 		}
-		
-		var mapPalette = function(colors) {
-			var p = initContext(initCanvas("p"));
-			_colors   = colors;
-			_colornum = colors.length;
-			for(var i=0,n=_width/_colornum;i<_colornum;i++) {
-				_colorshex.push('#' + _colors[i].color);
-				p.fillStyle=_colorshex[i];
-				p.fillRect(i*n,0,i*n+n,i*n+_height);
-			};
-			console.log(_colorshex.join(','));
-		}
-		
-		
-		//- - - - - - - - - - - - - - - - - - - -
-		var initDimensions = function(width,height) {
-			_width = _width||width;
-			_height = _height||height;
-			_size = _size||_width*_height*4;
-		}
-				
+						
 		//- - - - - - - - - - - - - - - - - - - -
 		var harissa = function(src) {
 			var image = new Image(), c;
@@ -213,7 +171,7 @@
 				c.drawImage(image, 0, 0);
 				var data = c.getImageData(0, 0, _width,_height);
 				var start = function(colors) {
-					mapPalette(colors);
+					mapPalette(colors,initCanvas("p"));
 					generate(data, function(bestshapes,milliseconds){
 						console.log('Image is done:',src);
 						makebest(bestshapes);
@@ -223,7 +181,7 @@
 					});
 				};
 				if(querystring("palette")) {
-					getColors(data,function(colors){
+					colors.getColors(data,function(colors){
 						parent.setColors(colors);
 						start(colors);
 					});
@@ -234,8 +192,9 @@
 			image.src = src;
 		}		
 		
-
-		harissa(querystring("image") + '?folder=' + querystring("folder"));
+		var rotate = querystring("rotate")||'';
+		if (rotate) rotate = '&rotate='+rotate;
+		harissa(querystring("image") + '?folder=' + querystring("folder") + rotate);
 	
 
 	})();	
