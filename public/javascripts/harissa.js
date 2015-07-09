@@ -1,7 +1,7 @@
 (function(){
 			
 		//Generations (number of shapes)
-		var _generations = 5000;
+		var _generations = querystring("generations")||5000;
 				
 		//Maximum dimensions for random shapes
 		var _guessradius = 10;

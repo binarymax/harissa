@@ -2,6 +2,11 @@ $(function(){
 	"use strict"
 	var _folder, _estimated, _set;
 
+	var _inters = parseInt(querystring("steps"))||null;
+
+	var _static = querystring("static")||null;
+	if(_static) _static = "#" + _static;
+
 	//------------------------------------------------------------------
 	//Estimates length of the calculation:
 	var estimate = function(milliseconds,slice,generations) {
@@ -71,7 +76,6 @@ $(function(){
 			views[i++].canvas.hide();
 			if(i===views.length) i=0;
 			views[i].canvas.show();
-			console.log(i);
 		},120);
 	};
 
@@ -82,6 +86,7 @@ $(function(){
 		for(var i=1;i<frames.length;i++){
 			var frame = frames[i], color, c;
 			for(c in frame.colors) {
+				//if(c!==_static && frame.colors.hasOwnProperty(c)) {
 				if(frame.colors.hasOwnProperty(c)) {
 					color = frame.colors[c];
 					color.tree = new kdTree(color.points, distance, ['x','y']);
@@ -99,6 +104,7 @@ $(function(){
 		for(var i=0;i<data.length;i++) {
 			var d=data[i];
 			var c=colors[d.color];
+			//if (c && d.color!==_static && c.tree) {
 			if (c && c.tree) {
 				var p = null;
 				try{p = c.tree.nearest(d,1);}catch(ex){console.log(d);}
@@ -117,14 +123,11 @@ $(function(){
 		for(var s=0;s<source.length-1;s++) {
 			var set = source[s];
 			var blend = blends[s*_inters] = frame(set.data,frames[s+1].colors);
-			//console.log('------',s*_inters);
 			    var l = blend.length;
 			for(var i = 0; i<l; i++) {
 				var d = blend[i];
-				//console.log(JSON.stringify(d));
 				for(var j=0;d&&d.inter&&j<d.inter.length;j++) {
 					var bl = s*_inters+j;
-					//console.log('---------',bl);
 					blends[bl] = blends[bl] || {name:bl,data:[]};
 					blends[bl].data = blends[bl].data || [];
 					blends[bl].data.push(d.inter[j]);
@@ -161,14 +164,6 @@ $(function(){
 	//Starts the process:
 	var start = function(e) {
 		$("#controls").hide();
-		var resize = querystring("resize");
-		_width=800;
-		_height=600;
-		if (resize && resize.length) {
-			var wh = resize.split('x');
-			_width = parseInt(wh[0]);
-			_height = parseInt(wh[1]);
-		}
 		var source = [];
 		$("#frames > li").each(function(li){
 			var id = $(this).attr("id");
@@ -247,8 +242,19 @@ $(function(){
 	//------------------------------------------------------------------
 	//Gets the frames and shows them in the list:
 	var load = function() {
+
+		var resize = querystring("resize");
+		_width = 800;
+		_height = 600;
+		if (resize && resize.length) {
+			var wh = resize.split('x');
+			_width = parseInt(wh[0]);
+			_height = parseInt(wh[1]);
+		}
+		$("#view").css({width:_width,height:_height,border:"1px solid #ccc"});
+
 		var $frames = $("#frames").hide();
-		_folder = querystring("folder");		
+		_folder = querystring("folder");
 		$.get("/frames/" + _folder + "?type=json").done(function(data){
 			if(data.isSuccess) {
 				var length = data.result.length;
